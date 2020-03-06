@@ -11,7 +11,7 @@
 DATA="raw_data/user_responses.txt"
 #
 # *** WORD EMBEDDINGS ***
-WORD_EMBEDDINGS_TXT="raw_data/glove.6B.txt"
+WORD_EMBEDDINGS_TXT="raw_data/glove.6B.50d.txt"
 
 # *** OUTPUT ***
 OUTPUT_PATH="DATA/pkl/user_responses.pkl"

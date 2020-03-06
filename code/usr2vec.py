@@ -76,7 +76,7 @@ class Usr2Vec():
                                  outputs=final_loss,
                                  updates=updates,
                                  mode="FAST_RUN",
-                                 allow_downcast=True)
+                                 allow_input_downcast=True)
     #\propto P(message|usr)    
     # scores_m = T.exp(T.dot(U.T,E[:,sent_idx]))    
     scores_m = T.dot(U.T,E[:,sent_idx])    

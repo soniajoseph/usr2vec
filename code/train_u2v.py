@@ -90,7 +90,7 @@ if __name__ == "__main__":
 				for msg_train, neg in zip(train, neg_samples): 				
 					obj += u2v.train(u_idx, msg_train, neg, curr_lrate)			
 			#average objective 
-			obj/=len(train)			
+			# obj/=len(train)			
 			obj_color = None		
 			if obj < prev_obj:
 				obj_color='green'

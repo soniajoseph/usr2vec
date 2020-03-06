@@ -37,8 +37,8 @@ def s_load(file_obj):
     cur_elt = []
     for line in file_obj:
 
-        if line == b'\n':
-            encoded_elt = b''.join(cur_elt)
+        if line == '\n':
+            encoded_elt = ''.join(cur_elt)
             try:
                 pickled_elt = base64.b64decode(encoded_elt)
                 elt = loads(pickled_elt)
