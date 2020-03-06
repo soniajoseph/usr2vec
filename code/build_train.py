@@ -43,6 +43,7 @@ if __name__ == "__main__" :
 
 	#keep only words that occur at least min_word_freq times
 	wc = {w:c for w,c in list(word_counter.items()) if c>args.min_word_freq} 
+	
 	#keep only the args.vocab_size most frequent words
 	tw = sorted(list(wc.items()), key=lambda x:x[1],reverse=True)
 	top_words = {w[0]:i for i,w in enumerate(tw[:args.vocab_size])}	
@@ -66,7 +67,6 @@ if __name__ == "__main__" :
 		E[:, idx] = full_E[:,top_words[wrd]]
 
 	print("Building training data...")
-
 	#negative sampler
 	idx2wrd = {i:w for w,i in list(wrd2idx.items())}
 	sampler = negative_sampler(word_counter, idx2wrd)
@@ -85,40 +85,54 @@ if __name__ == "__main__" :
 	with open(args.input,"r") as fid:		
 		for j, line in enumerate(fid):
 			total_lines += 1		
+
 			try:			
-				message = line.replace("\"", "").replace("'","").replace('"', '').split("\t")[1:]
+				message = line.replace("\"", "").replace("'","").replace('"', '').split("\t")[1]
 				# print("Message", message, "Message end")
 			except:
 				# print("ignored line: {}".format(line))
 				ignored_lines += 1
+
 			#convert to indices
-			msg_idx = [wrd2idx[w] for w in message if w in wrd2idx]			
+			msg_idx = [wrd2idx[w] for w in message if w in wrd2idx]	
+
+
 			#compute negative samples
 			negative_samples = sampler.sample((len(msg_idx),args.neg_samples))			
-			if len(msg_idx)<MIN_DOC_LEN: continue				
+			
+			if len(msg_idx)<MIN_DOC_LEN: continue	
+
 			u_idx = line.split("\t")[0] 	
-			usr_count += 1 							
+
+							
 			if prev_user is None: 
 				#first time 
 				prev_user = u_idx
-			elif u_idx != prev_user:					
+
+			elif u_idx != prev_user:
+				usr_count += 1 						
 				#after accumulating all documents for current user, shuffle and write them to disk			
 				assert len(prev_user_data) == len(prev_neg_samples)
+
 				#shuffle the data			
 				shuf_idx = np.arange(len(prev_user_data))
 				rng.shuffle(shuf_idx)
 				prev_user_data = [prev_user_data[i] for i in shuf_idx]
 				prev_neg_samples = [prev_neg_samples[i] for i in shuf_idx]
+				
 				# set_trace()					
 				split = int(len(prev_user_data)*.9)
 				train = prev_user_data[:split]
 				test  = prev_user_data[split:]	
 				neg_samples = prev_neg_samples[:split]
+				
 				#each training instance consists of:
 				#[user_name, train docs, test docs, negative samples] 			
 				stPickle.s_dump_elt([prev_user, train, test, neg_samples ], f_train)				
 				prev_user_data = []				
-				prev_neg_samples = []							
+				prev_neg_samples = []		
+				print("put in pickle")
+
 			elif j == n_docs-1:			
 				#can't forget the very last message
 				prev_user_data.append(msg_idx)				
@@ -142,6 +156,7 @@ if __name__ == "__main__" :
 			#collect word counts to compute unigram distribution
 			for w_idx in msg_idx:								
 				wrd_idx_counts[w_idx]+=1	
+
 	f_train.close()					
 	unigram_distribution = wrd_idx_counts / wrd_idx_counts.sum(0)	
 	print("[pickling aux data]")

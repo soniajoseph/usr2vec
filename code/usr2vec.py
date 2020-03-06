@@ -101,3 +101,4 @@ class Usr2Vec():
     model = [self.params[i].get_value() for i in range(len(self.params))]
     with open(path,"wb") as fid:
       pickle.dump(model,fid,pickle.HIGHEST_PROTOCOL)
+      print("Model saved")

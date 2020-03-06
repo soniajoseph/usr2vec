@@ -36,7 +36,6 @@ def s_load(file_obj):
     element at a time"""
     cur_elt = []
     for line in file_obj:
-
         if line == '\n':
             encoded_elt = ''.join(cur_elt)
             try:

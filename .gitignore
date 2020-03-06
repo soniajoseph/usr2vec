@@ -4,10 +4,11 @@
 code/my_utils/*
 DATA/tmp
 DATA/out
+DATA/pkl
 code/historical_tweets_extractor.py
 DATA/embeddings/bin
 DATA/embeddings/word_embeddings.txt
 code/sma_toolkit
 venv
-raw_data/glove*
 raw_data/*
+DATA/*

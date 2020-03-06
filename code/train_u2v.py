@@ -44,27 +44,36 @@ if __name__ == "__main__":
 	except IOError:
 		print("Couldn't not find file %s" % args.input)
 		sys.exit()	
+	
 	#path to save intermediate versions of the user embedding matrix (during training)
+	print("Creating intermediate version.")
 	tmp_name = ''.join([ chr(random.randint(97,122)) for i in range(10)])
 	user_emb_bin = os.path.split(args.input)[0]+"/tmp-"+tmp_name.upper() 
+	
 	print("[lrate: %.5f | margin loss: %d | epochs: %d| reshuff: %s | init_w2v: %s | @%s]\n" % (args.lrate,args.margin, args.epochs, args.reshuff, args.init_w2v, user_emb_bin))	
+	
 	if args.init_w2v:
 		u2v = usr2vec.Usr2Vec(E, n_usrs,lrate=args.lrate,margin_loss=args.margin, init_w2v=args.init_w2v)	
 	else:
 		u2v = usr2vec.Usr2Vec(E, n_usrs,lrate=args.lrate,margin_loss=args.margin)	
-	total_time = time.time()					
+	
+	total_time = time.time()	
+
 	usr2idx = {}
 	tf = open(args.input,"r")	
-	
-	training_data = stPickle.s_load(tf)   	
+
+	training_data = stPickle.s_load(tf) 
+
 	#each training instance corresponds to a user
 	total_logprob = 0  
 	total_epochs = 0
+
 	for z, instance in enumerate(training_data):	
+		print("IN TRAINING INSTANCE")
 		# if z == 100:
-		# 	print "bailed earlier with %d users " % z
+		# # 	print "bailed earlier with %d users " % z
 		# 	n_usrs = z
-		# 	break
+		# # 	break
 		prev_logprob, best_logprob = -10**100, -10**100	 
 		prev_obj, best_obj  = 10**100, 10**100
 		drops = 0		
@@ -150,16 +159,19 @@ if __name__ == "__main__":
 	mins = np.floor(tt*1.0/60)
 	secs = tt - mins*60	
 	print("*"*90)
-	print("[avg epochs: %d | avg ILL: %.4f | lrate: %.5f]" % ((total_epochs/n_usrs),(total_logprob/n_usrs),args.lrate))
+	# print("[avg epochs: %d | avg ILL: %.4f | lrate: %.5f]" % ((total_epochs/n_usrs),(total_logprob/n_usrs),args.lrate))
 	print("*"*90)
 	print("[runtime: %d.%d minutes]" % (mins,secs))	
 	tf.close()	
 
 	############# EXPORT
 
+	print()
 	print("Exporting embeddings...")
+
 	with open(user_emb_bin,"rb") as fid:
 		U = pickle.load(fid)[0]
+
 	#create dir if it does not exist
 	if not os.path.exists(os.path.dirname(args.output)):
 		os.makedirs(os.path.dirname(args.output))
