@@ -69,7 +69,6 @@ if __name__ == "__main__":
 	total_epochs = 0
 
 	for z, instance in enumerate(training_data):	
-		print("IN TRAINING INSTANCE")
 		# if z == 100:
 		# # 	print "bailed earlier with %d users " % z
 		# 	n_usrs = z
@@ -79,14 +78,24 @@ if __name__ == "__main__":
 		drops = 0		
 		curr_lrate = u2v.lrate
 		user, train, test, neg_samples = instance
+
+		print("USER", user)
+
 		try:
 			u_idx  = usr2idx[user]
+			print(u_idx)
+			break 
+
+
 		except KeyError:
 			u_idx = len(usr2idx)
 			usr2idx[user] = u_idx		
+
 		if not args.quiet:		
-			print("[user: %s (%d/%d)]" % (user,z+1,n_usrs))		
+			print("[user: %s (%d/%d)]" % (user,z+1,n_usrs))
+
 		user_time  = time.time()	
+
 		for e in range(args.epochs):	
 			############# TRAIN 	
 			total_epochs+=1
@@ -175,6 +184,7 @@ if __name__ == "__main__":
 	#create dir if it does not exist
 	if not os.path.exists(os.path.dirname(args.output)):
 		os.makedirs(os.path.dirname(args.output))
+
 	with open(args.output+".txt","w") as fod:
 		fod.write("%d %d\n" % (U.shape[1],U.shape[0]))	
 		for user, u_id in list(usr2idx.items()):		

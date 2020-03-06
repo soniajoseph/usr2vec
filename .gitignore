@@ -12,3 +12,4 @@ code/sma_toolkit
 venv
 raw_data/*
 DATA/*
+DATA/pkl/user_responses.pkl
