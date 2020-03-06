@@ -40,6 +40,7 @@ if __name__ == "__main__" :
 			message = line.split()[1:]
 			word_counter.update(message)				
 			n_docs+=1
+
 	#keep only words that occur at least min_word_freq times
 	wc = {w:c for w,c in list(word_counter.items()) if c>args.min_word_freq} 
 	#keep only the args.vocab_size most frequent words
@@ -48,21 +49,26 @@ if __name__ == "__main__" :
 	print("loading word embeddings...")		
 	full_E, full_wrd2idx = emb_utils.read_embeddings(args.emb,top_words)
 	ooevs = emb_utils.get_OOEVs(full_E, full_wrd2idx)
+
 	#keep only words with pre-trained embeddings
 	old_len = len(top_words)
+	print("old_len", old_len)
 	for w in ooevs:
 		del top_words[w]	
 	wrd2idx = {w:i for i,w in enumerate(top_words.keys())}	
 	print("[vocabulary size: %d|%d]" % (len(wrd2idx),old_len))
+
 	#generate the embedding matrix
 	emb_size = full_E.shape[0]
 	E = np.zeros((int(emb_size), len(wrd2idx)))   
+	print("E shape", E.shape)
 	for wrd,idx in list(wrd2idx.items()): 
 		E[:, idx] = full_E[:,top_words[wrd]]
 
-	print("building training data...")
+	print("Building training data...")
+
 	#negative sampler
-	idx2wrd = {i:w for w,i in list(wrd2idx.items())}	
+	idx2wrd = {i:w for w,i in list(wrd2idx.items())}
 	sampler = negative_sampler(word_counter, idx2wrd)
 
 	if not os.path.exists(os.path.dirname(args.output)):
@@ -71,23 +77,31 @@ if __name__ == "__main__" :
 	prev_user, prev_user_data, prev_ctxscores, prev_neg_samples  = None, [], [], []
 	wrd_idx_counts = np.zeros(len(wrd2idx))	
 	f_train = open(args.output,"wb") 
+
+	usr_count = 0
+	ignored_lines = 0
+	total_lines = 0
 	
 	with open(args.input,"r") as fid:		
-		for j, line in enumerate(fid):		
+		for j, line in enumerate(fid):
+			total_lines += 1		
 			try:			
-				message = line.replace("\"", "").replace("'","").split("\t")[1].decode("utf-8").split()	
+				message = line.replace("\"", "").replace("'","").replace('"', '').split("\t")[1:]
+				# print("Message", message, "Message end")
 			except:
-				print("ignored line: {}".format(line))
+				# print("ignored line: {}".format(line))
+				ignored_lines += 1
 			#convert to indices
 			msg_idx = [wrd2idx[w] for w in message if w in wrd2idx]			
 			#compute negative samples
 			negative_samples = sampler.sample((len(msg_idx),args.neg_samples))			
 			if len(msg_idx)<MIN_DOC_LEN: continue				
-			u_idx = line.split("\t")[0] 								
+			u_idx = line.split("\t")[0] 	
+			usr_count += 1 							
 			if prev_user is None: 
 				#first time 
 				prev_user = u_idx
-			elif u_idx != prev_user:						
+			elif u_idx != prev_user:					
 				#after accumulating all documents for current user, shuffle and write them to disk			
 				assert len(prev_user_data) == len(prev_neg_samples)
 				#shuffle the data			
@@ -136,4 +150,7 @@ if __name__ == "__main__" :
 	with open(aux_data,"wb") as fid:
 		pickle.dump([wrd2idx,unigram_distribution, word_counter, E], fid, pickle.HIGHEST_PROTOCOL)
 	tend = time.time() - t0
-	print("\n[runtime: %d minutes (%.2f secs)]" % ((tend/60),tend))    
+	print("\n[runtime: %d minutes (%.2f secs)]" % ((tend/60),tend)) 
+
+	print("Ignored Line Number", ignored_lines)
+	print("Total lines", total_lines)   

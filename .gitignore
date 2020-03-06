@@ -10,3 +10,4 @@ DATA/embeddings/word_embeddings.txt
 code/sma_toolkit
 venv
 raw_data/glove*
+raw_data/*
