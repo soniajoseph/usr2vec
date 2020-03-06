@@ -1,5 +1,5 @@
 import argparse
-import cPickle
+import pickle
 from collections import Counter
 from ipdb import set_trace
 from negative_samples import negative_sampler
@@ -8,7 +8,6 @@ import os
 from sma_toolkit import embeddings as emb_utils 
 import streaming_pickle as stPickle
 import time
-np.set_printoptions(threshold=np.nan)
 MIN_DOC_LEN=4
 
 def get_parser():
@@ -27,26 +26,26 @@ if __name__ == "__main__" :
 	args = parser.parse_args()	
 	rng = np.random.RandomState(args.seed)    
 
-	print "[input: %s | word vectors: %s | max vocab_size: %s | min_word_freq: %s | output: %s]" %  (os.path.basename(args.input), 
+	print("[input: %s | word vectors: %s | max vocab_size: %s | min_word_freq: %s | output: %s]" %  (os.path.basename(args.input), 
 						 os.path.basename(args.emb), 
 						 args.vocab_size, 
 						 args.min_word_freq, 
-						 os.path.basename(args.output)) 
+						 os.path.basename(args.output))) 
 
 	t0 = time.time()
 	word_counter = Counter()
 	n_docs=0	
 	with open(args.input,"r") as fid:	
 		for line in fid:			
-			message = line.decode("utf-8").split()[1:]
+			message = line.split()[1:]
 			word_counter.update(message)				
 			n_docs+=1
 	#keep only words that occur at least min_word_freq times
-	wc = {w:c for w,c in word_counter.items() if c>args.min_word_freq} 
+	wc = {w:c for w,c in list(word_counter.items()) if c>args.min_word_freq} 
 	#keep only the args.vocab_size most frequent words
-	tw = sorted(wc.items(), key=lambda x:x[1],reverse=True)
+	tw = sorted(list(wc.items()), key=lambda x:x[1],reverse=True)
 	top_words = {w[0]:i for i,w in enumerate(tw[:args.vocab_size])}	
-	print "loading word embeddings..."		
+	print("loading word embeddings...")		
 	full_E, full_wrd2idx = emb_utils.read_embeddings(args.emb,top_words)
 	ooevs = emb_utils.get_OOEVs(full_E, full_wrd2idx)
 	#keep only words with pre-trained embeddings
@@ -54,16 +53,16 @@ if __name__ == "__main__" :
 	for w in ooevs:
 		del top_words[w]	
 	wrd2idx = {w:i for i,w in enumerate(top_words.keys())}	
-	print "[vocabulary size: %d|%d]" % (len(wrd2idx),old_len)
+	print("[vocabulary size: %d|%d]" % (len(wrd2idx),old_len))
 	#generate the embedding matrix
 	emb_size = full_E.shape[0]
 	E = np.zeros((int(emb_size), len(wrd2idx)))   
-	for wrd,idx in wrd2idx.items(): 
+	for wrd,idx in list(wrd2idx.items()): 
 		E[:, idx] = full_E[:,top_words[wrd]]
 
-	print "building training data..."
+	print("building training data...")
 	#negative sampler
-	idx2wrd = {i:w for w,i in wrd2idx.items()}	
+	idx2wrd = {i:w for w,i in list(wrd2idx.items())}	
 	sampler = negative_sampler(word_counter, idx2wrd)
 
 	if not os.path.exists(os.path.dirname(args.output)):
@@ -78,7 +77,7 @@ if __name__ == "__main__" :
 			try:			
 				message = line.replace("\"", "").replace("'","").split("\t")[1].decode("utf-8").split()	
 			except:
-				print "ignored line: {}".format(line)
+				print("ignored line: {}".format(line))
 			#convert to indices
 			msg_idx = [wrd2idx[w] for w in message if w in wrd2idx]			
 			#compute negative samples
@@ -131,10 +130,10 @@ if __name__ == "__main__" :
 				wrd_idx_counts[w_idx]+=1	
 	f_train.close()					
 	unigram_distribution = wrd_idx_counts / wrd_idx_counts.sum(0)	
-	print "[pickling aux data]"
+	print("[pickling aux data]")
 	#aux_data = os.path.split(args.output)[0] + "/aux.pkl"
 	aux_data = os.path.splitext(args.output)[0] + "_aux.pkl"
 	with open(aux_data,"wb") as fid:
-		cPickle.dump([wrd2idx,unigram_distribution, word_counter, E], fid, cPickle.HIGHEST_PROTOCOL)
+		pickle.dump([wrd2idx,unigram_distribution, word_counter, E], fid, pickle.HIGHEST_PROTOCOL)
 	tend = time.time() - t0
-	print "\n[runtime: %d minutes (%.2f secs)]" % ((tend/60),tend)    
+	print("\n[runtime: %d minutes (%.2f secs)]" % ((tend/60),tend))    

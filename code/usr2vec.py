@@ -1,4 +1,4 @@
-import cPickle  
+import pickle  
 # from ipdb import set_trace
 import numpy as np
 import theano
@@ -75,7 +75,8 @@ class Usr2Vec():
     self.train = theano.function(inputs=[usr_idx, sent_idx, neg_samp_idx, curr_lrate],
                                  outputs=final_loss,
                                  updates=updates,
-                                 mode="FAST_RUN")
+                                 mode="FAST_RUN",
+                                 allow_downcast=True)
     #\propto P(message|usr)    
     # scores_m = T.exp(T.dot(U.T,E[:,sent_idx]))    
     scores_m = T.dot(U.T,E[:,sent_idx])    
@@ -99,4 +100,4 @@ class Usr2Vec():
   def save_model(self, path):
     model = [self.params[i].get_value() for i in range(len(self.params))]
     with open(path,"wb") as fid:
-      cPickle.dump(model,fid,cPickle.HIGHEST_PROTOCOL)
+      pickle.dump(model,fid,pickle.HIGHEST_PROTOCOL)

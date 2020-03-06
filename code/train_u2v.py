@@ -1,5 +1,5 @@
 import argparse
-import cPickle 
+import pickle 
 from sma_toolkit import colstr
 #from ipdb import set_trace
 import usr2vec
@@ -35,19 +35,19 @@ if __name__ == "__main__":
 	#command line arguments	
 	parser = get_parser()
 	args = parser.parse_args()	
-	print "[Training U2V by user]"
-	print "loading data..."	
-	with open(args.aux,"r") as fid:
-		_,_,_,E = cPickle.load(fid) 
+	print("[Training U2V by user]")
+	print("loading data...")	
+	with open(args.aux,"rb") as fid:
+		_,_,_,E = pickle.load(fid) 
 	try:
 		n_usrs = count_users(args.input)
 	except IOError:
-		print "Couldn't not find file %s" % args.input
+		print("Couldn't not find file %s" % args.input)
 		sys.exit()	
 	#path to save intermediate versions of the user embedding matrix (during training)
-	tmp_name = ''.join([ chr(random.randint(97,122)) for i in xrange(10)])
+	tmp_name = ''.join([ chr(random.randint(97,122)) for i in range(10)])
 	user_emb_bin = os.path.split(args.input)[0]+"/tmp-"+tmp_name.upper() 
-	print "[lrate: %.5f | margin loss: %d | epochs: %d| reshuff: %s | init_w2v: %s | @%s]\n" % (args.lrate,args.margin, args.epochs, args.reshuff, args.init_w2v, user_emb_bin)	
+	print("[lrate: %.5f | margin loss: %d | epochs: %d| reshuff: %s | init_w2v: %s | @%s]\n" % (args.lrate,args.margin, args.epochs, args.reshuff, args.init_w2v, user_emb_bin))	
 	if args.init_w2v:
 		u2v = usr2vec.Usr2Vec(E, n_usrs,lrate=args.lrate,margin_loss=args.margin, init_w2v=args.init_w2v)	
 	else:
@@ -76,9 +76,9 @@ if __name__ == "__main__":
 			u_idx = len(usr2idx)
 			usr2idx[user] = u_idx		
 		if not args.quiet:		
-			print "[user: %s (%d/%d)]" % (user,z+1,n_usrs)		
+			print("[user: %s (%d/%d)]" % (user,z+1,n_usrs))		
 		user_time  = time.time()	
-		for e in xrange(args.epochs):	
+		for e in range(args.epochs):	
 			############# TRAIN 	
 			total_epochs+=1
 			obj = 0					
@@ -128,11 +128,11 @@ if __name__ == "__main__":
 				drops+=1
 			if not args.quiet:	
 				if curr_lrate!=prev_lrate:
-					print " ILL: " + colstr(("%.3f" % logprob), color, (best_logprob==logprob)) + " (lrate:" + str(curr_lrate)+")" 
+					print(" ILL: " + colstr(("%.3f" % logprob), color, (best_logprob==logprob)) + " (lrate:" + str(curr_lrate)+")") 
 				else:
-					print " ILL: " + colstr(("%.3f" % logprob), color, (best_logprob==logprob))			
+					print(" ILL: " + colstr(("%.3f" % logprob), color, (best_logprob==logprob)))			
 			if drops>=args.patience:
-				print "ran out of patience (%d epochs)" % e
+				print("ran out of patience (%d epochs)" % e)
 				break
 			prev_logprob = logprob
 		et = time.time() - user_time
@@ -144,28 +144,28 @@ if __name__ == "__main__":
 		total_logprob+=best_logprob
 		alp = total_logprob/(z+1)
 		if not args.quiet:
-			print "> ILL: %.3f %d.%d mins (avg ILL: %.3f| %d.%d mins)" % (best_logprob,user_mins,user_secs,alp,tt_mins,tt_secs)
+			print("> ILL: %.3f %d.%d mins (avg ILL: %.3f| %d.%d mins)" % (best_logprob,user_mins,user_secs,alp,tt_mins,tt_secs))
 		
 	tt = time.time() - total_time
 	mins = np.floor(tt*1.0/60)
 	secs = tt - mins*60	
-	print "*"*90
-	print "[avg epochs: %d | avg ILL: %.4f | lrate: %.5f]" % ((total_epochs/n_usrs),(total_logprob/n_usrs),args.lrate)
-	print "*"*90
-	print "[runtime: %d.%d minutes]" % (mins,secs)	
+	print("*"*90)
+	print("[avg epochs: %d | avg ILL: %.4f | lrate: %.5f]" % ((total_epochs/n_usrs),(total_logprob/n_usrs),args.lrate))
+	print("*"*90)
+	print("[runtime: %d.%d minutes]" % (mins,secs))	
 	tf.close()	
 
 	############# EXPORT
 
-	print "Exporting embeddings..."
-	with open(user_emb_bin,"r") as fid:
-		U = cPickle.load(fid)[0]
+	print("Exporting embeddings...")
+	with open(user_emb_bin,"rb") as fid:
+		U = pickle.load(fid)[0]
 	#create dir if it does not exist
 	if not os.path.exists(os.path.dirname(args.output)):
 		os.makedirs(os.path.dirname(args.output))
 	with open(args.output+".txt","w") as fod:
 		fod.write("%d %d\n" % (U.shape[1],U.shape[0]))	
-		for user, u_id in usr2idx.items():		
+		for user, u_id in list(usr2idx.items()):		
 			emb = U[:,u_id]
 			fod.write("%s %s\n" % (user, " ".join(map(str, emb))))
 		

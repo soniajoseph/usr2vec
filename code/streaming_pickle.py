@@ -9,7 +9,7 @@ Modified by Brian Thorne 2013 to add base64 encoding to support
 python3 bytearray and the like.
 """
 import base64
-from cPickle import dumps, loads
+from pickle import dumps, loads
 import unittest
 import tempfile
 

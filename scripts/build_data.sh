@@ -8,17 +8,17 @@
 # 1. can be white-space tokenized 
 # 2. are sorted by user (i.e., all the documents of a given user appear sequentially in the file)
 # 3. have at least MIN_MSG_SIZE=4 words (see build_data.py)
-DATA="raw_data/sample.txt"
+DATA="raw_data/user_responses.txt"
 #
 # *** WORD EMBEDDINGS ***
-WORD_EMBEDDINGS_TXT="/Users/samir/Dev/resources/embeddings/word_embedddings.txt"
-#
+WORD_EMBEDDINGS_TXT="raw_data/glove.6B.txt"
+
 # *** OUTPUT ***
-OUTPUT_PATH="DATA/pkl/sample.pkl"
-#
+OUTPUT_PATH="DATA/pkl/user_responses.pkl"
+
 # *** OPTIONS ***
 MAX_VOCAB_SIZE=50000
-MIN_DOCS=100 #reject users with less than this number of documents
+MIN_DOCS=20 #reject users with less than this number of documents
 NEGATIVE_SAMPLES=20
 #
 ##########################

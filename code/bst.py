@@ -161,7 +161,7 @@ class BinarySearchTree(object):
         """Return the number of items in this BST"""
         return self._len
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Return true if this BST is not empty"""
         return self._len>0
 

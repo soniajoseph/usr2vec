@@ -1,5 +1,5 @@
 import argparse
-import cPickle
+import pickle
 from joblib import Parallel, delayed
 from ipdb import set_trace
 import numpy as np
@@ -29,7 +29,7 @@ def extract(instance, unigram_distribution, num_neg_samples):
     for msg in train:            
         set_trace()
         neg_samp = [ multinomial_samples(unigram_distribution, msg, num_neg_samples) \
-                     for _ in xrange(len(msg)) ]
+                     for _ in range(len(msg)) ]
         neg_samples.append(neg_samp)        
     instance[NEG_SAMPLES_IDX] = neg_samples    
     return instance
@@ -80,11 +80,11 @@ def get_parser():
 if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()      
-    print "[training data: %s | aux_data: %s | n_workers: %d | resume: %s]" % (args.input, args.aux_data, args.n_workers, args.resume)             
+    print("[training data: %s | aux_data: %s | n_workers: %d | resume: %s]" % (args.input, args.aux_data, args.n_workers, args.resume))             
     with open(args.aux_data,"r") as fid:
-        wrd2idx, unigram_distribution, word_counter, _ = cPickle.load(fid)        
+        wrd2idx, unigram_distribution, word_counter, _ = pickle.load(fid)        
 
-    index2word = {i:w for w,i in wrd2idx.items()}    
+    index2word = {i:w for w,i in list(wrd2idx.items())}    
     sampler = negative_sampler(word_counter, index2word)
 
     t0 = time.time()
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     os.remove(args.input)
     os.rename(tmp_data_path, args.input)
     tend = time.time() - t0
-    print "\n[runtime: %d minutes (%.2f secs)]" % ((tend/60),tend)    
+    print("\n[runtime: %d minutes (%.2f secs)]" % ((tend/60),tend))    
 
 
 
