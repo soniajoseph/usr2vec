@@ -6,6 +6,7 @@ from google.cloud import bigquery_storage_v1beta1
 from google.cloud import storage
 import google.auth
 import os
+import numpy as np
 
 class BigQuery():
 
@@ -37,26 +38,64 @@ class BigQuery():
 
 	# Get user birth year, city, continent, capital, gender
 	# Note: append number of conversations from training data
-	def user_data(self, users):
+	def user_data(self, users, embeddings):
+
+		t = tuple(users)
+		print("tuple length", len(t))
 
 		query_string = """
-		SELECT birth_year, latest_location_obj.city, latest_location_obj.continent_name, latest_location_obj.location.capital, gender, action_counter
+		SELECT uid, birth_year, latest_location_obj.city, latest_location_obj.continent_name, latest_location_obj.location.capital, gender, action_counter
 		FROM `inwords-2ac82.firestore_data.MUsers`
-		WHERE uid = '00Ea0e5amtX8E2cJY0RvP9jGTuv2'
-		"""
+		WHERE uid IN {}
+		""".format(t)
 
-		dataframe = (
+
+		df = (
 	    self.bqclient.query(query_string)
 	    .result()
 	    .to_dataframe(bqstorage_client=self.bqstorageclient)
 		)
-		print(df.head())
+
+		# Add embedding column to dataframe 
+		print(len(df.index))
+		print(len(embeddings))
+		df["emb"] = embeddings
 
 		return df
 
+	# Takes uid and embeddings .txr file and splits uid and embeddings
+	# Returns uids as array of strings and embeddings as array of floats
+	def split_embedding(self, file):
 
-# Test
+		uids = []
+		embeddings = []
+
+		with open(file, 'r') as f:
+			# Skip first two lines [header and irrelevant vector for 'uid']
+			for _ in range(2):
+				next(f)
+			for line in f:
+				line = line.split()
+				user = line[0]
+				vector = np.array(line[1:]).astype(np.float)
+				uids.append(user)
+				embeddings.append(vector)
+
+		return uids, embeddings
+
+	# Save df object with str name as pkl file
+	def save_df(self, df, name):
+		df.to_pickle('../processed_data/' + name + '.pkl')
+
+
+
+# Test by creating a user data table from BigQuery,
+# Turning it into a dataframe, then saving as pkl in 'preprocessed_data' folder
 
 bq = BigQuery()
-bq.user_data("test")
+uids, embeddings = bq.split_embedding('../DATA/pkl/user_responses.txt')
+df = bq.user_data(uids, embeddings)
+bq.save_df(df, 'user_data')
 
+print(df.keys())
+print(df.head())
